@@ -19,6 +19,7 @@
         <Button x:Name="okButton"
                 Content="OK"
                 Background="#542e0a"
+                BorderBrush="Transparent"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Bottom"
                 Margin="0,0,0,60"

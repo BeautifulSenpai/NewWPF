@@ -55,6 +55,7 @@ namespace WpfApp1
             uidText.Text = "UID: " + uid;
             SaveUidToServerAsync(uid);
             SetHighPriority();
+            ScheduleSendingData();
         }
 
         private void Initialize()
@@ -65,6 +66,36 @@ namespace WpfApp1
             questionnaire = new Questionnaire();
             InitializeTaskbarIcon();
             HideToTray();
+        }
+
+        private void ScheduleSendingData()
+        {
+            DateTime targetTime = DateTime.Today.AddHours(21);
+            //DateTime targetTime = DateTime.Today.AddHours(15).AddMinutes(50);
+
+            // Если целевое время уже прошло для текущего дня, добавьте один день
+            if (DateTime.Now > targetTime)
+            {
+                targetTime = targetTime.AddDays(1);
+            }
+
+            // Разница между текущим временем и целевым временем
+            TimeSpan timeUntilTarget = targetTime - DateTime.Now;
+
+            // Создайте таймер и установите интервал до выполнения функции
+            DispatcherTimer timer = new DispatcherTimer();
+            timer.Interval = timeUntilTarget;
+            timer.Tick += (sender, e) =>
+            {
+                // Вызывайте функцию SendProcessDataToServer() здесь
+                SendProcessDataToServer();
+
+                // После выполнения действия, создайте новый таймер для следующего дня
+                ScheduleSendingData();
+            };
+
+            // Запустите таймер
+            timer.Start();
         }
 
         private void SetHighPriority()
@@ -244,9 +275,8 @@ namespace WpfApp1
             {
                 AuthStatusText("Соединение установлено", true);
             });
-            //socket.OnDisconnected += (sender, e) => { Dispatcher.Invoke(() => { AuthStatusText("Соединение разорвано"); UpdateConnectionStatusIcon(false); }); };
-            socket.On("continue-work", (data) => { HandleAppMinimize(); });
-            socket.On("finish-work", (data) => { HandleAppFinish(); });
+            socket.On("continue-work", (data) => { HandleAppMinimize(); UnlockKeyboard(); });
+            socket.On("finish-work", (data) => { HandleAppFinish(); UnlockKeyboard(); });
             socket.OnDisconnected += (sender, e) =>
             {
                 Dispatcher.Invoke(() =>
@@ -296,12 +326,13 @@ namespace WpfApp1
                     this.Activate();
                     timer.Stop();
                     UpdateTextBlock("Время вышло!");
+                    LockKeyboard();
+                    WindowState = WindowState.Maximized;
+                    Topmost = true;
                     socket.EmitAsync("timer-finished");
                     currentQuestionIndex = 0;
                     correctAnswers = 0;
                     ShowQuestion(currentQuestionIndex);
-                    WindowState = WindowState.Normal;
-                    Topmost = true;
                 }
             };
             timer.Start();
