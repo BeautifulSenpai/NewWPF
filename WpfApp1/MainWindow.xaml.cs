@@ -73,28 +73,22 @@ namespace WpfApp1
             DateTime targetTime = DateTime.Today.AddHours(21);
             //DateTime targetTime = DateTime.Today.AddHours(15).AddMinutes(50);
 
-            // Если целевое время уже прошло для текущего дня, добавьте один день
             if (DateTime.Now > targetTime)
             {
                 targetTime = targetTime.AddDays(1);
             }
 
-            // Разница между текущим временем и целевым временем
             TimeSpan timeUntilTarget = targetTime - DateTime.Now;
 
-            // Создайте таймер и установите интервал до выполнения функции
             DispatcherTimer timer = new DispatcherTimer();
             timer.Interval = timeUntilTarget;
             timer.Tick += (sender, e) =>
             {
-                // Вызывайте функцию SendProcessDataToServer() здесь
                 SendProcessDataToServer();
 
-                // После выполнения действия, создайте новый таймер для следующего дня
                 ScheduleSendingData();
             };
 
-            // Запустите таймер
             timer.Start();
         }
 
